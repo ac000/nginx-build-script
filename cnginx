@@ -1,0 +1,32 @@
+#!/bin/sh
+
+PREFIX=/opt/nginx
+
+MAKEFILE=objs/Makefile
+
+if  [ "$#" -ge 1 ]; then
+	case $1 in
+	*--prefix=*)
+		PREFIX=${1#*=}
+		shift
+		;;
+	esac
+fi
+
+make -f Makefile.ac mrproper
+
+./auto/configure --prefix="${PREFIX}" "$@" || exit $?
+
+cp Makefile.ac Makefile
+
+# shellcheck disable=SC2016
+sed -i '1s;^; \
+ifeq \(\$D,1\) \
+	CFLAGS_DEBUG = -O0 \
+endif \
+\
+ifeq \(\$E,0\) \
+	CFLAGS_NOERROR += -Wno-error \
+endif\n;' $MAKEFILE
+
+sed -i 's/CFLAGS =.*$/&\$\(CFLAGS_DEBUG\) \$\(CFLAGS_NOERROR\) \$\(EXTRA_CFLAGS\)/' $MAKEFILE

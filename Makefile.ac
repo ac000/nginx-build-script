@@ -1,0 +1,48 @@
+
+default:	build
+
+clean:
+	find objs/src -name "*.o" -exec rm {} \;
+	rm -rf objs/nginx*
+
+mrproper:
+	rm -rf Makefile objs
+
+.PHONY:	default clean
+
+build:
+	$(MAKE) -f objs/Makefile
+
+install:
+	$(MAKE) -f objs/Makefile install
+
+modules:
+	$(MAKE) -f objs/Makefile modules
+
+upgrade:
+	/opt/nginx/sbin/nginx -t
+
+	kill -USR2 `cat /opt/nginx/logs/nginx.pid`
+	sleep 1
+	test -f /opt/nginx/logs/nginx.pid.oldbin
+
+	kill -QUIT `cat /opt/nginx/logs/nginx.pid.oldbin`
+
+tags:
+	ctags -R src/
+
+help:
+	@echo "Targets:"
+	@echo
+	@echo "  clean			- Removes object files and binary"
+	@echo "  mrproper		- Removes Makefile & objs/"
+	@echo "  tags			- Create ctags file"
+	@echo
+	@echo "Variables to control make/build behaviour:"
+	@echo
+	@echo "  make D=1 ...           - Enables debug builds (-O0)"
+	@echo "  make E=0 ...           - Disables -Werror"
+	@echo
+	@echo "  make EXTRA_CFLAGS= ... - Add extra compiler options"
+
+.PHONY:	build install modules upgrade tags help
